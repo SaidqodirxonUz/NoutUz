@@ -1,6 +1,6 @@
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const config = require('../config');
+const express = require("express");
+const jwt = require("jsonwebtoken");
+const config = require("../config");
 
 /**
  * Login qilganligini tekshirish uchun
@@ -14,7 +14,7 @@ const isLoggedIn = (req, res, next) => {
 
     if (!token) {
       return res.status(401).json({
-        error: 'Login qilmagansiz.',
+        error: "Login qilmagansiz.",
       });
     }
 
@@ -25,7 +25,7 @@ const isLoggedIn = (req, res, next) => {
     next();
   } catch (error) {
     return res.status(401).json({
-      error: 'Login qilmagansiz.',
+      error: "Login qilmagansiz.",
     });
   }
 };

@@ -1,0 +1,34 @@
+users
+-admin
+
+category
+oyin uchun, ish uchun
+
+
+brendlar
+HP,APPLE
+
+
+model
+HP VICTUS
+MACBOOK AIR
+
+
+notebooklar
+Asus Expretbook15
+
+=-=-=-=
+
+notebook
+
+-id
+-name
+-price
+-description
+
+
+-image
+-brend
+-model
+
+
