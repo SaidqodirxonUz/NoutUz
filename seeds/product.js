@@ -23,6 +23,7 @@ exports.seed = async function (knex) {
       brand_id: 2,
       model_id: 2,
       category_id: 1,
+      img_id: 11,
       description: "Qimmat boganidan keyin zo`r boladida ",
       price: 16666000,
     },
