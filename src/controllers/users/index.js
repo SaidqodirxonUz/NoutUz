@@ -5,13 +5,14 @@ const db = require("../../db");
 const config = require("../../shared/config");
 
 /**
- *
+ * Post users
+ * 1. Yangi users qo'shishni faqat admin va super_admin qila olishi kerak
  * @param {express.Request} req
  * @param {express.Response} res
  */
 const postUsers = async (req, res) => {
   try {
-    const { first_name, last_name, role, password } = req.body;
+    const { first_name, last_name, role, username, password } = req.body;
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -21,6 +22,7 @@ const postUsers = async (req, res) => {
         first_name,
         last_name,
         role,
+        username,
         password: hashedPassword,
       })
       .returning("*");
@@ -36,12 +38,11 @@ const postUsers = async (req, res) => {
 };
 
 /**
- * Get list of Users
- * 1. Login qilgan hamma adminlar ko'ra olishi mumkin
+ * Get list of users
+ * 1. Login qilgan hamma Adminlar ko'ra olishi mumkin
  * @param {express.Request} req
  * @param {express.Response} res
  */
-
 const getUsers = async (req, res) => {
   try {
     const {
@@ -52,7 +53,13 @@ const getUsers = async (req, res) => {
       sort_by = "id",
       sort_order = "desc",
     } = req.query;
-    const dbQuery = db("users").select("id", "first_name", "last_name", "role");
+    const dbQuery = db("users").select(
+      "id",
+      "first_name",
+      "last_name",
+      "role",
+      "username"
+    );
 
     if (role) {
       dbQuery.where({ role });
@@ -68,10 +75,10 @@ const getUsers = async (req, res) => {
     dbQuery.orderBy(sort_by, sort_order);
     dbQuery.limit(limit).offset(offset);
 
-    const Users = await dbQuery;
+    const users = await dbQuery;
 
     res.status(200).json({
-      Users,
+      users,
       pageInfo: {
         total: total.length,
         offset,
@@ -86,27 +93,27 @@ const getUsers = async (req, res) => {
 };
 
 /**
- * Get single Users
- * 1. Login qilgan hamma adminlar ko'ra olishi mumkin
+ * Get single users
+ * 1. Login qilgan hamma Adminlar ko'ra olishi mumkin
  * @param {express.Request} req
  * @param {express.Response} res
  */
 const showUsers = async (req, res) => {
   try {
     const { id } = req.params;
-    const Users = await db("users")
-      .select("id", "first_name", "last_name", "role")
+    const users = await db("users")
+      .select("id", "first_name", "last_name", "role", "username")
       .where({ id })
       .first();
 
-    if (!Users) {
+    if (!users) {
       return res.status(404).json({
-        error: "admin topilmadi.",
+        error: "Admin topilmadi.",
       });
     }
 
     res.status(200).json({
-      Users,
+      users,
     });
   } catch (error) {
     res.status(500).json({
@@ -116,33 +123,33 @@ const showUsers = async (req, res) => {
 };
 
 /**
- * Login Users
- * admin tizimga kirish uchun login qilishi mumkin
+ * Login users
+ * Admin tizimga kirish uchun login qilishi mumkin
  * @param {express.Request} req
  * @param {express.Response} res
  */
 const loginUsers = async (req, res) => {
   try {
-    const { password } = req.body;
+    const { username, password } = req.body;
 
     const existing = await db("users")
-      .where({})
+      .where({ username })
       .select("id", "password", "role")
       .first();
 
     if (!existing) {
       return res.status(401).json({
-        error: `${first_name}yoki password xato.`,
+        error: "Username yoki password xato.",
       });
     }
 
-    // const match = await bcrypt.compare(password, existing.password);
+    const match = await bcrypt.compare(password, existing.password);
 
-    // if (!match) {
-    //   return res.status(401).json({
-    //     error: yoki password xato.',
-    //   });
-    // }
+    if (!match) {
+      return res.status(401).json({
+        error: "Username yoki password xato.",
+      });
+    }
 
     const token = jwt.sign(
       { id: existing.id, role: existing.role },
@@ -163,7 +170,8 @@ const loginUsers = async (req, res) => {
 };
 
 /**
- * Update Users
+ * Update users
+ * 1. Faqat super_admin va admin boshqa Adminlarni ma'lumotlarini tahrirlay oladi
  * @param {express.Request} req
  * @param {express.Response} res
  */
@@ -176,7 +184,7 @@ const patchUsers = async (req, res) => {
 
     if (!existing) {
       return res.status(404).json({
-        error: `${id} idli admin topilmadi.`,
+        error: `${id} idli Admin topilmadi.`,
       });
     }
 
@@ -189,7 +197,7 @@ const patchUsers = async (req, res) => {
     const updated = await db("users")
       .where({ id })
       .update({ ...changes })
-      .returning(["id", "first_name", "last_name", "role"]);
+      .returning(["id", "first_name", "last_name", "role", "username"]);
 
     res.status(200).json({
       updated: updated[0],
@@ -202,8 +210,8 @@ const patchUsers = async (req, res) => {
 };
 
 /**
- * Delete Users
- * 1. Faqat super_admin va admin boshqa adminlarni o'chira oladi
+ * Delete users
+ * 1. Faqat super_admin va admin boshqa Adminlarni o'chira oladi
  * @param {express.Request} req
  * @param {express.Response} res
  */
@@ -215,14 +223,14 @@ const deleteUsers = async (req, res) => {
 
     if (!existing) {
       return res.status(404).json({
-        error: `${id} idli admin topilmadi.`,
+        error: `${id} idli Admin topilmadi.`,
       });
     }
 
     const deleted = await db("users")
       .where({ id })
       .delete()
-      .returning(["id", "first_name", "last_name", "role"]);
+      .returning(["id", "first_name", "last_name", "role", "username"]);
 
     res.status(200).json({
       deleted: deleted[0],
@@ -242,3 +250,5 @@ module.exports = {
   patchUsers,
   deleteUsers,
 };
+
+// admin

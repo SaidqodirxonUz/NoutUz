@@ -25,11 +25,13 @@ router.get(
   hasRole(["super_admin", "admin"]),
   controllers.showUsers
 );
+
 router.post(
   "/users/login",
   genValidator(schemas.loginUsersSchema),
   controllers.loginUsers
 );
+
 router.patch(
   "/users/:id",
   isLoggedIn,
